@@ -17,10 +17,10 @@ with pytest.raises(ValueError):
     card = UnoCard('purple', 1)
 
 card = UnoCard('red', 0)
-card = UnoCard('black', 'colorswap')
+card = UnoCard('black', 'wildcard')
 
 with pytest.raises(ValueError):
-    card = UnoCard('red', 'colorswap')
+    card = UnoCard('red', 'wildcard')
 
 with pytest.raises(ValueError):
     card = UnoCard('black', 1)
