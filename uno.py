@@ -49,6 +49,19 @@ class UnoCard:
         )
 
 
+class UnoPlayer:
+    def __init__(self, cards):
+        if len(cards) != 7:
+            raise ValueError(
+                'Invalid player: must be initalised with 7 UnoCards'
+            )
+        if not all(isinstance(card, UnoCard) for card in cards):
+            raise ValueError(
+                'Invalid player: cards must all be UnoCard objects'
+            )
+        self.hand = cards
+
+
 class UnoGame:
     def __init__(self, players):
         if not isinstance(players, int):
@@ -56,7 +69,9 @@ class UnoGame:
         if players < 2:
             raise ValueError('Invalid game: must be at least 2 players')
         self.deck = self._create_deck()
-        self.players = [self._create_hand() for player in range(players)]
+        self.players = [
+            UnoPlayer(self._deal_hand()) for player in range(players)
+        ]
 
     def _create_deck(self):
         color_cards = product(COLORS, COLOR_CARD_TYPES)
@@ -66,7 +81,7 @@ class UnoGame:
         shuffle(deck)
         return deck
 
-    def _create_hand(self):
+    def _deal_hand(self):
         return [self.deck.pop() for i in range(7)]
 
     @property

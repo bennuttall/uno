@@ -102,19 +102,68 @@ card = UnoCard('red', 1)
 with pytest.raises(ValueError):
     game = UnoGame(card)
 
+# Test creating invalid Uno Player
+
+cards = []
+with pytest.raises(ValueError):
+    player = UnoPlayer(cards)
+
+cards = range(7)
+with pytest.raises(ValueError):
+    player = UnoPlayer(cards)
+
+cards = [UnoCard('red', 0)]
+with pytest.raises(ValueError):
+    player = UnoPlayer(cards)
+
+cards = [
+    ('red', 0),
+    ('red', 1),
+    ('yellow', 0),
+    ('yellow', 2),
+    ('blue', 0),
+    ('blue', 1),
+]
+uno_cards = [UnoCard(color, card_type) for color, card_type in cards]
+uno_cards.append(1)
+with pytest.raises(ValueError):
+    player = UnoPlayer(cards)
+
+cards = [
+    ('red', 0),
+    ('red', 1),
+    ('yellow', 0),
+    ('yellow', 2),
+    ('blue', 0),
+    ('blue', 1),
+    ('black', 'wildcard'),
+    ('black', '+4'),
+]
+uno_cards = [UnoCard(color, card_type) for color, card_type in cards]
+with pytest.raises(ValueError):
+    player = UnoPlayer(cards)
+
+# Test creating valid Uno Player
+
+cards = [
+    ('red', 0),
+    ('red', 1),
+    ('yellow', 0),
+    ('yellow', 2),
+    ('blue', 0),
+    ('blue', 1),
+    ('black', 'wildcard'),
+]
+uno_cards = [UnoCard(color, card_type) for color, card_type in cards]
+player = UnoPlayer(uno_cards)
+
 # Test creating valid Uno Game
 
 for n in range(2, 8):
     game = UnoGame(n)
     assert len(game.players) == n
     for player in game.players:
-        assert len(player) == 7
-        for card in player:
-            assert isinstance(card, UnoCard)
+        assert isinstance(player, UnoPlayer)
+        assert len(player.hand) == 7
     assert len(game.deck) == 108 - 7*n
-
-# Test gameplay
-
-game = UnoGame(2)
-assert isinstance(game.current_card, UnoCard)
-assert game.is_active
+    assert len(game.deck) > 1
