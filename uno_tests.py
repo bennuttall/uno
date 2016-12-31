@@ -1,7 +1,7 @@
 import pytest
 from uno import *
 
-# Test creating invalid cards throws exception
+# Test creating invalid cards
 
 with pytest.raises(TypeError):
     card = UnoCard()
@@ -26,40 +26,47 @@ with pytest.raises(ValueError):
 
 # Test creating valid cards
 
-card = UnoCard('red', 0)
-card = UnoCard('black', 'wildcard')
+card1 = UnoCard('red', 0)
+assert repr(card1) == '<UnoCard object: red 0>'
+card2 = UnoCard('red', 1)
+assert repr(card2) == '<UnoCard object: red 1>'
+assert card1 != card2
+assert card1.color == card2.color
+assert card1.card_type != card2.card_type
+card3 = UnoCard('red', 0)
+assert card1 == card3
 
 # Test placing valid cards on other cards
 
 card1 = UnoCard('red', 1)
 
 card2 = UnoCard('red', 1)
-assert card1.place(card2)
+assert card1.playable(card2)
 card2 = UnoCard('red', 2)
-assert card1.place(card2)
+assert card1.playable(card2)
 card2 = UnoCard('red', 'skip')
-assert card1.place(card2)
+assert card1.playable(card2)
 card2 = UnoCard('green', 1)
-assert card1.place(card2)
+assert card1.playable(card2)
 card2 = UnoCard('green', 1)
-assert card1.place(card2)
+assert card1.playable(card2)
 card2 = UnoCard('red', 1)
-assert card1.place(card2)
+assert card1.playable(card2)
 card2 = UnoCard('black', 'wildcard')
-assert card1.place(card2)
+assert card1.playable(card2)
 card2 = UnoCard('black', '+4')
-assert card1.place(card2)
+assert card1.playable(card2)
 
 # Test placing invalid cards on other cards
 
 card1 = UnoCard('red', 1)
 
 card2 = UnoCard('green', 2)
-assert not card1.place(card2)
+assert not card1.playable(card2)
 card2 = UnoCard('blue', 9)
-assert not card1.place(card2)
+assert not card1.playable(card2)
 card2 = UnoCard('yellow', 'skip')
-assert not card1.place(card2)
+assert not card1.playable(card2)
 
 # Test placing valid cards on black cards
 
@@ -67,11 +74,11 @@ card1 = UnoCard('black', 'wildcard')
 card1.temp_color = 'red'
 
 card2 = UnoCard('red', 1)
-assert card1.place(card2)
+assert card1.playable(card2)
 card2 = UnoCard('red', 'skip')
-assert card1.place(card2)
+assert card1.playable(card2)
 card2 = UnoCard('black', 'wildcard')
-assert card1.place(card2)
+assert card1.playable(card2)
 
 # Test placing invalid cards on black cards
 
@@ -79,10 +86,10 @@ card1 = UnoCard('black', 'wildcard')
 card1.temp_color = 'red'
 
 card2 = UnoCard('green', 1)
-assert not card1.place(card2)
+assert not card1.playable(card2)
 
 card2 = UnoCard('green', 'skip')
-assert not card1.place(card2)
+assert not card1.playable(card2)
 
 # Test creating invalid Uno Game
 
@@ -94,9 +101,6 @@ with pytest.raises(ValueError):
 
 with pytest.raises(ValueError):
     game = UnoGame('foo')
-
-with pytest.raises(TypeError):
-    game = UnoGame('red', 1)
 
 card = UnoCard('red', 1)
 with pytest.raises(ValueError):
@@ -167,3 +171,39 @@ for n in range(2, 8):
         assert len(player.hand) == 7
     assert len(game.deck) == 108 - 7*n
     assert len(game.deck) > 1
+
+# Test start of gameplay
+
+game = UnoGame(2)
+assert isinstance(game.current_card, UnoCard)
+assert game.is_active
+assert game.current_player == game.players[0]
+
+# Test gameplay with un-shuffled deck
+
+game = UnoGame(5, random=False)
+for i, player in enumerate(game.players, 1):
+    print("player", i, player.hand, end="\n\n")
+
+assert game.current_player == game.players[0]
+assert game.current_card == UnoCard('yellow', 1)
+player_0 = game.players[0]
+assert player_0.can_go(game.current_card)
+
+with pytest.raises(ValueError):
+    game.play(player="bob", card=0)
+
+with pytest.raises(ValueError):
+    # not player 1's go
+    game.play(player=1, card=0)
+
+with pytest.raises(ValueError):
+    # cannot play red 0
+    game.play(player=0, card=0)
+
+assert player_0.hand[1] == UnoCard('red', 1)
+# can play red 1
+game.play(player=0, card=1)
+assert len(player_0.hand) == 6
+assert game.current_card == UnoCard('red', 1)
+assert game.is_active
