@@ -161,6 +161,45 @@ cards = [
 uno_cards = [UnoCard(color, card_type) for color, card_type in cards]
 player = UnoPlayer(uno_cards)
 
+# Test ReversibleCycle
+
+rc = ReversibleCycle(range(3))
+a = next(rc)
+assert a == 0
+a = next(rc)
+assert a == 1
+a = next(rc)
+assert a == 2
+a = next(rc)
+assert a == 0
+a = next(rc)
+assert a == 1
+a = next(rc)
+assert a == 2
+rc.reverse()
+a = next(rc)
+assert a == 1
+a = next(rc)
+assert a == 0
+rc.reverse()
+a = next(rc)
+assert a == 1
+
+rc = ReversibleCycle(range(3))
+rc.reverse()
+a = next(rc)
+assert a == 2
+a = next(rc)
+assert a == 1
+
+rc = ReversibleCycle(range(3))
+rc.reverse()
+rc.reverse()
+a = next(rc)
+assert a == 0
+a = next(rc)
+assert a == 1
+
 # Test creating valid Uno Game
 
 for n in range(2, 8):
@@ -178,32 +217,3 @@ game = UnoGame(2)
 assert isinstance(game.current_card, UnoCard)
 assert game.is_active
 assert game.current_player == game.players[0]
-
-# Test gameplay with un-shuffled deck
-
-game = UnoGame(5, random=False)
-for i, player in enumerate(game.players, 1):
-    print("player", i, player.hand, end="\n\n")
-
-assert game.current_player == game.players[0]
-assert game.current_card == UnoCard('yellow', 1)
-player_0 = game.players[0]
-assert player_0.can_go(game.current_card)
-
-with pytest.raises(ValueError):
-    game.play(player="bob", card=0)
-
-with pytest.raises(ValueError):
-    # not player 1's go
-    game.play(player=1, card=0)
-
-with pytest.raises(ValueError):
-    # cannot play red 0
-    game.play(player=0, card=0)
-
-assert player_0.hand[1] == UnoCard('red', 1)
-# can play red 1
-game.play(player=0, card=1)
-assert len(player_0.hand) == 6
-assert game.current_card == UnoCard('red', 1)
-assert game.is_active

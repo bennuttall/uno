@@ -13,9 +13,12 @@ CARD_TYPES = NUMBERS + SPECIAL_CARD_TYPES + BLACK_CARD_TYPES
 
 class UnoCard:
     """
-    Represents a single Uno Card
+    Represents a single Uno Card, given a valid color and card type.
 
-    card = UnoCard(color, card_type)
+    color: string
+    card_type: string/int
+
+    >>> card = UnoCard('red', 5)
     """
     def __init__(self, color, card_type):
         self._validate(color, card_type)
@@ -34,7 +37,7 @@ class UnoCard:
 
     def _validate(self, color, card_type):
         """
-        Check the card is valid, raise exception if not
+        Check the card is valid, raise exception if not.
         """
         if color not in ALL_COLORS:
             raise ValueError('Invalid color')
@@ -86,8 +89,8 @@ class UnoPlayer:
     Represents a player in an Uno game. A player is created with a list of 7
     Uno cards.
 
-    cards = [UnoCard('red', n) for n in range(7)]
-    player = UnoPlayer(cards)
+    >>> cards = [UnoCard('red', n) for n in range(7)]
+    >>> player = UnoPlayer(cards)
     """
     def __init__(self, cards):
         if len(cards) != 7:
@@ -109,6 +112,14 @@ class UnoPlayer:
 
 
 class UnoGame:
+    """
+    Represents an Uno game.
+
+    players: int
+    random: bool (default: True)
+
+    >>> game = UnoGame(5)
+    """
     def __init__(self, players, random=True):
         self.random = random
         if not isinstance(players, int):
@@ -119,6 +130,8 @@ class UnoGame:
         self.players = [
             UnoPlayer(self._deal_hand()) for player in range(players)
         ]
+        self._player_cycle = ReversibleCycle(self.players)
+        self._current_player = self.players[0] ###
 
     def _create_deck(self):
         color_cards = product(COLORS, COLOR_CARD_TYPES)
@@ -144,7 +157,7 @@ class UnoGame:
 
     @property
     def current_player(self):
-        return self.players[0]
+        return self._current_player
 
     def play(self, player, card):
         if not isinstance(player, int):
@@ -163,3 +176,57 @@ class UnoGame:
             )
         played_card = _player.hand.pop(card)
         self.deck.append(played_card)
+        if played_card.card_type in SPECIAL_CARD_TYPES:
+            pass
+
+
+class ReversibleCycle:
+    """
+    Represents an interface to an iterable which can be infinitely cycled (like
+    itertools.cycle), and can be reversed.
+
+    Starts at the first item (index 0), unless reversed before first iteration,
+    in which case starts at the last item.
+
+    iterable: any finite iterable
+
+    >>> rc = ReversibleCycle(range(3))
+    >>> next(rc)
+    0
+    >>> next(rc)
+    1
+    >>> rc.reverse()
+    >>> next(rc)
+    0
+    >>> next(rc)
+    2
+    """
+    def __init__(self, iterable):
+        self._items = list(iterable)
+        self._pos = None
+        self._reverse = False
+
+    def __next__(self):
+        if self.pos is None:
+            self.pos = -1 if self._reverse else 0
+        else:
+            self.pos = self.pos + self._delta
+        return self._items[self.pos]
+
+    @property
+    def _delta(self):
+        return -1 if self._reverse else 1
+
+    @property
+    def pos(self):
+        return self._pos
+
+    @pos.setter
+    def pos(self, value):
+        self._pos = value % len(self._items)
+
+    def reverse(self):
+        """
+        Reverse the order of the iterable.
+        """
+        self._reverse = not self._reverse
