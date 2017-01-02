@@ -30,7 +30,7 @@ class UnoCard:
         return '<UnoCard object: {} {}>'.format(self.color, self.card_type)
 
     def __str__(self):
-        return '{}{}>'.format(self.color_short, self.card_type_short)
+        return '{}{}'.format(self.color_short, self.card_type_short)
 
     def __eq__(self, other):
         return self.color == other.color and self.card_type == other.card_type
@@ -89,10 +89,13 @@ class UnoPlayer:
     Represents a player in an Uno game. A player is created with a list of 7
     Uno cards.
 
+    cards: list of 7 UnoCards
+    player_id: int/str (default: None)
+
     >>> cards = [UnoCard('red', n) for n in range(7)]
     >>> player = UnoPlayer(cards)
     """
-    def __init__(self, cards):
+    def __init__(self, cards, player_id=None):
         if len(cards) != 7:
             raise ValueError(
                 'Invalid player: must be initalised with 7 UnoCards'
@@ -102,6 +105,20 @@ class UnoPlayer:
                 'Invalid player: cards must all be UnoCard objects'
             )
         self.hand = cards
+        self.player_id = player_id
+
+    def __repr__(self):
+        if self.player_id is not None:
+            return '<UnoPlayer object: player {}>'.format(self.player_id)
+        else:
+            return '<UnoPlayer object>'
+
+    def __str__(self):
+        if self.player_id is not None:
+            return str(self.player_id)
+        else:
+            return repr(self)
+
 
     def can_go(self, current_card):
         """
@@ -121,30 +138,44 @@ class UnoGame:
     >>> game = UnoGame(5)
     """
     def __init__(self, players, random=True):
-        self.random = random
         if not isinstance(players, int):
             raise ValueError('Invalid game: players must be integer')
-        if players < 2:
-            raise ValueError('Invalid game: must be at least 2 players')
-        self.deck = self._create_deck()
+        if not 2 <= players <= 15:
+            raise ValueError('Invalid game: must be between 2 and 15 players')
+        self.deck = self._create_deck(random)
         self.players = [
-            UnoPlayer(self._deal_hand()) for player in range(players)
+            UnoPlayer(self._deal_hand(), n) for n in range(players)
         ]
         self._player_cycle = ReversibleCycle(self.players)
-        self._current_player = self.players[0] ###
+        self._current_player = next(self._player_cycle)
+        self._winner = None
 
-    def _create_deck(self):
+    def __next__(self):
+        """
+        Iteration sets the current player to the next player in the cycle.
+        """
+        self._current_player = next(self._player_cycle)
+
+    def _create_deck(self, random):
+        """
+        Return a list of the complete set of Uno Cards. If random is True, the
+        deck will be shuffled, otherwise will be unshuffled.
+        """
         color_cards = product(COLORS, COLOR_CARD_TYPES)
         black_cards = product(repeat('black', 4), BLACK_CARD_TYPES)
         all_cards = chain(color_cards, black_cards)
         deck = [UnoCard(color, card_type) for color, card_type in all_cards]
-        if self.random:
+        if random:
             shuffle(deck)
             return deck
         else:
             return list(reversed(deck))
 
     def _deal_hand(self):
+        """
+        Return a list of 7 cards from the top of the deck, and remove these
+        from the deck.
+        """
         return [self.deck.pop() for i in range(7)]
 
     @property
@@ -153,20 +184,39 @@ class UnoGame:
 
     @property
     def is_active(self):
-        return True
+        return all(len(player.hand) > 0 for player in self.players)
 
     @property
     def current_player(self):
         return self._current_player
 
-    def play(self, player, card):
+    @property
+    def winner(self):
+        return self._winner
+
+    def play(self, player, card=None, new_color=None):
+        """
+        Process the player playing a card.
+
+        player: int representing player index number
+        card: int representing index number of card in player's hand
+
+        It must be player's turn, and if card is given, it must be playable.
+        If card is not given (None), the player picks up a card from the deck.
+
+        If game is over, raise an exception.
+        """
         if not isinstance(player, int):
-            raise ValueError('Invalid player: should be the index')
+            raise ValueError('Invalid player: should be the index number')
         if not 0 <= player < len(self.players):
             raise ValueError('Invalid player: index out of range')
         _player = self.players[player]
         if self.current_player != _player:
             raise ValueError('Invalid player: not their turn')
+        if card is None:
+            self._pick_up(_player, 1)
+            next(self)
+            return
         _card = _player.hand[card]
         if not self.current_card.playable(_card):
             raise ValueError(
@@ -174,10 +224,58 @@ class UnoGame:
                     _card, self.current_card
                 )
             )
+        if _card.color == 'black':
+            if new_color not in COLORS:
+                raise ValueError(
+                    'Invalid new_color: must be red, yellow, green or blue'
+                )
+        if not self.is_active:
+            raise ValueError('Game is over')
+
         played_card = _player.hand.pop(card)
         self.deck.append(played_card)
-        if played_card.card_type in SPECIAL_CARD_TYPES:
-            pass
+
+        card_color = played_card.color
+        card_type = played_card.card_type
+        if card_color == 'black':
+            self.current_card.temp_color = new_color
+            if card_type == '+4':
+                next(self)
+                self._pick_up(self.current_player, 4)
+        elif card_type == 'reverse':
+            self._player_cycle.reverse()
+        elif card_type == 'skip':
+            next(self)
+        elif card_type == '+2':
+            next(self)
+            self._pick_up(self.current_player, 2)
+
+        if self.is_active:
+            next(self)
+        else:
+            self._winner = _player
+            self._print_winner()
+
+    def _print_winner(self):
+        """
+        Print the winner name if available, otherwise look up the index number.
+        """
+        if self.winner.player_id:
+            winner_name = self.winner.player_id
+        else:
+            winner_name = self.players.index(self.winner)
+        print("Player {} wins!".format(winner_name))
+
+    def _pick_up(self, player, n):
+        """
+        Take n cards from the bottom of the deck and add it to the player's
+        hand.
+
+        player: UnoPlayer
+        n: int
+        """
+        penalty_cards = [self.deck.pop(0) for i in range(n)]
+        player.hand.extend(penalty_cards)
 
 
 class ReversibleCycle:
