@@ -119,7 +119,6 @@ class UnoPlayer:
         else:
             return repr(self)
 
-
     def can_play(self, current_card):
         """
         Return True if the player has any playable cards (on top of the current
