@@ -33,3 +33,17 @@ while game.is_active:
         print("Player {} picked up".format(player))
         game.play(player=player_id, card=None)
 ```
+
+See [random_game.py](random_game.py)
+
+## AI
+
+A simple interactive AI version of the game can be played using keyboard inputs. Just create an instance of `AIUnoGame` with the required number of players:
+
+```python
+from uno import AIUnoGame
+
+game = AIUnoGame(5)
+```
+
+You will be assigned a player number at random, and will be asked to make your move when it is your turn. Enter card numbers as a zero-based index, and colours as lowercase strings. (I'll tidy that up later)

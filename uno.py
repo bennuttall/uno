@@ -386,7 +386,3 @@ class AIUnoGame:
         print('Your hand: {}'.format(
             ' '.join(str(card) for card in self.player.hand)
         ))
-
-
-if __name__ == '__main__':
-    game = AIUnoGame(2)
