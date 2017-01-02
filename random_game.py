@@ -1,22 +1,14 @@
-# Uno
-
-Some unit tested Python code to model the card game Uno
-
-## Rules
-
-https://en.wikipedia.org/wiki/Uno_(card_game)#Official_rules
-
-## Usage
-
-An example auto-generated game of 5 players:
-
-```python
 from uno import UnoGame, COLORS
 import random
 
-game = UnoGame(5)
+players = random.randint(2, 15)
+game = UnoGame(players)
 
+print("Starting a {} player game".format(players))
+
+count = 0
 while game.is_active:
+    count += 1
     player = game.current_player
     player_id = player.player_id
     if player.can_play(game.current_card):
@@ -32,4 +24,5 @@ while game.is_active:
     else:
         print("Player {} picked up".format(player))
         game.play(player=player_id, card=None)
-```
+
+print("{} player game - {} cards played".format(players, count))
