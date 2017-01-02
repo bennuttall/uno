@@ -235,7 +235,7 @@ player_4 = game.players[4]
 assert game.current_player == player_0
 assert game.current_card == UnoCard('yellow', 1)
 assert game.winner is None
-assert player_0.can_go(game.current_card)
+assert player_0.can_play(game.current_card)
 
 with pytest.raises(ValueError):
     game.play(player="bob", card=0)
@@ -283,7 +283,7 @@ game.play(player=0, card=0)  # red 3
 game.play(player=4, card=0)  # yellow 3
 game.play(player=3, card=1)  # yellow 1
 
-assert not game.current_player.can_go(game.current_card)
+assert not game.current_player.can_play(game.current_card)
 assert game.current_player == player_2
 player_2_hand_size_before = len(player_2.hand)
 game.play(player=2, card=None)  # can't go, pick up

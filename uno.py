@@ -120,7 +120,7 @@ class UnoPlayer:
             return repr(self)
 
 
-    def can_go(self, current_card):
+    def can_play(self, current_card):
         """
         Return True if the player has any playable cards (on top of the current
         card provided), otherwise return False
