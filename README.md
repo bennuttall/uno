@@ -47,3 +47,21 @@ game = AIUnoGame(5)
 ```
 
 You will be assigned a player number at random, and will be asked to make your move when it is your turn. Enter card numbers as a zero-based index, and colours as lowercase strings. (I'll tidy that up later)
+
+## Graphical game
+
+A graphical version of the game can be played, developed using [pygame-zero](http://pygame-zero.readthedocs.io/).
+
+![](pgz_screenshot.png)
+
+Install pygame zero with:
+
+```bash
+sudo pip3 install pgzero
+```
+
+And run the game with:
+
+```bash
+pgzrun uno_pgz.py
+```
