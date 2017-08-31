@@ -150,13 +150,14 @@ class UnoGame:
             raise ValueError('Invalid game: players must be integer')
         if not 2 <= players <= 15:
             raise ValueError('Invalid game: must be between 2 and 15 players')
-        self.deck = self._create_deck(random)
+        self.deck = self._create_deck(random=random)
         self.players = [
             UnoPlayer(self._deal_hand(), n) for n in range(players)
         ]
         self._player_cycle = ReversibleCycle(self.players)
         self._current_player = next(self._player_cycle)
         self._winner = None
+        self._check_first_card()
 
     def __next__(self):
         """
@@ -285,6 +286,12 @@ class UnoGame:
         penalty_cards = [self.deck.pop(0) for i in range(n)]
         player.hand.extend(penalty_cards)
 
+    def _check_first_card(self):
+        if self.current_card.color == 'black':
+            color = choice(COLORS)
+            self.current_card.temp_color = color
+            print("Selected random color for black card: {}".format(color))
+
 
 class ReversibleCycle:
     """
@@ -375,7 +382,6 @@ class AIUnoGame:
         self.player = choice(self.game.players)
         self.player_index = self.game.players.index(self.player)
         print('The game begins. You are Player {}.'.format(self.player_index))
-        self.print_hand()
 
     def __next__(self):
         game = self.game
@@ -383,31 +389,27 @@ class AIUnoGame:
         player_id = player.player_id
         current_card = game.current_card
         if player == self.player:
-            print('Current card: {}, color: {}'.format(
-                game.current_card, game.current_card._color
-            ))
-            self.print_hand()
             played = False
             while not played:
                 card_index = None
                 while card_index is None:
                     card_index = game_data.selected_card
-                    print("Selection: {}".format(card_index))
-                    sleep(1)
                 new_color = None
                 if card_index is not False:
                     card = player.hand[card_index]
-                    game_data.log = 'You played card {:full}'.format(card)
                     if not game.current_card.playable(card):
                         game_data.log = 'You cannot play that card'
+                        continue
                     else:
+                        game_data.log = 'You played card {:full}'.format(card)
                         if card.color == 'black' and len(player.hand) > 1:
                             game_data.color_selection_required = True
                             while new_color is None:
                                 new_color = game_data.selected_color
-                                print("Selection: {}".format(new_color))
+                            game_data.log = 'You selected {}'.format(new_color)
                 else:
                     card_index = None
+                    game_data.log = 'You picked up'
                 game.play(player_id, card_index, new_color)
                 played = True
         elif player.can_play(game.current_card):
@@ -430,13 +432,15 @@ class AIUnoGame:
             ' '.join(str(card) for card in self.player.hand)
         ))
 
-WIDTH = 1000
+num_players = 3
+
+game = AIUnoGame(num_players)
+
+WIDTH = 1200
 HEIGHT = 800
 
 deck_img = Actor('back')
 color_imgs = {color: Actor(color) for color in COLORS}
-
-game = AIUnoGame(3)
 
 def game_loop():
     while game.game.is_active:
@@ -485,13 +489,15 @@ def update():
     show_log()
 
 def on_mouse_down(pos):
-    for card in game.player.hand:
-        if card.sprite.collidepoint(pos):
-            game_data.selected_card = game.player.hand.index(card)
-            print('Selected card {} index {}'.format(card, game.player.hand.index(card)))
-    if deck_img.collidepoint(pos):
-        game_data.selected_card = False
-    for color, card in color_imgs.items():
-        if card.collidepoint(pos):
-            game_data.selected_color = color
-            game_data.color_selection_required = False
+    if game.player == game.game.current_player:
+        for card in game.player.hand:
+            if card.sprite.collidepoint(pos):
+                game_data.selected_card = game.player.hand.index(card)
+                print('Selected card {} index {}'.format(card, game.player.hand.index(card)))
+        if deck_img.collidepoint(pos):
+            game_data.selected_card = False
+            print('Selected pick up')
+        for color, card in color_imgs.items():
+            if card.collidepoint(pos):
+                game_data.selected_color = color
+                game_data.color_selection_required = False
