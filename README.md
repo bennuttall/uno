@@ -1,6 +1,6 @@
 # Uno
 
-Some unit tested Python code to model the card game Uno
+A Python implementation of the card game [Uno](https://en.wikipedia.org/wiki/Uno_(card_game))
 
 ## Rules
 
