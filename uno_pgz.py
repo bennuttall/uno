@@ -1,6 +1,4 @@
-from threading import Thread
-from time import sleep
-
+import pgzero.clock
 from pgzero.actor import Actor
 from pgzero.screen import Screen as _Screen
 
@@ -16,6 +14,7 @@ screen: _Screen
 _game = None
 _deck_img = None
 _color_imgs = None
+_pending_card_index = None
 
 
 def _init():
@@ -23,12 +22,11 @@ def _init():
     _game = AIUnoGame(NUM_PLAYERS)
     _deck_img = Actor("back")
     _color_imgs = {color: Actor(color) for color in COLORS}
-    Thread(target=_game_loop, daemon=True).start()
+    pgzero.clock.schedule_interval(_advance_game, 1)
 
 
-def _game_loop():
-    while _game.game.is_active:
-        sleep(1)
+def _advance_game():
+    if _game.game.is_active and _game.game.current_player != _game.player:
         next(_game)
 
 
@@ -77,19 +75,27 @@ def _show_log():
 
 
 def on_mouse_down(pos):
+    global _pending_card_index
     if _game is None or _game.player != _game.game.current_player:
+        return
+    if _game.game_data.color_selection_required:
+        for color, card in _color_imgs.items():
+            if card.collidepoint(pos):
+                _game.game_data.color_selection_required = False
+                _game.play_human(_pending_card_index, new_color=color)
+                _pending_card_index = None
         return
     for card in _game.player.hand:
         if card.sprite.collidepoint(pos):
-            _game.game_data.selected_card = _game.player.hand.index(card)
-            print("Selected card {} index {}".format(card, _game.player.hand.index(card)))
+            card_index = _game.player.hand.index(card)
+            if card.color == "black" and len(_game.player.hand) > 1:
+                _pending_card_index = card_index
+                _game.game_data.color_selection_required = True
+            else:
+                _game.play_human(card_index)
+            return
     if _deck_img.collidepoint(pos):
-        _game.game_data.selected_card = False
-        print("Selected pick up")
-    for color, card in _color_imgs.items():
-        if card.collidepoint(pos):
-            _game.game_data.selected_color = color
-            _game.game_data.color_selection_required = False
+        _game.play_human(None)
 
 
 def main():

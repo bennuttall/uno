@@ -47,30 +47,8 @@ class PgzUnoGame(UnoGame):
 
 class GameData:
     def __init__(self):
-        self.selected_card = None
-        self.selected_color = None
         self.color_selection_required = False
         self.log = ""
-
-    @property
-    def selected_card(self):
-        selected_card = self._selected_card
-        self.selected_card = None
-        return selected_card
-
-    @selected_card.setter
-    def selected_card(self, value):
-        self._selected_card = value
-
-    @property
-    def selected_color(self):
-        selected_color = self._selected_color
-        self.selected_color = None
-        return selected_color
-
-    @selected_color.setter
-    def selected_color(self, value):
-        self._selected_color = value
 
 
 class AIUnoGame:
@@ -82,35 +60,13 @@ class AIUnoGame:
         print("The game begins. You are Player {}.".format(self.player_index))
 
     def __next__(self):
+        """Advance the game for AI players. Returns without action on the human's turn."""
         game = self.game
         game_data = self.game_data
         player = game.current_player
         player_id = player.player_id
-        current_card = game.current_card
         if player == self.player:
-            played = False
-            while not played:
-                card_index = None
-                while card_index is None:
-                    card_index = game_data.selected_card
-                new_color = None
-                if card_index is not False:
-                    card = player.hand[card_index]
-                    if not game.current_card.playable(card):
-                        game_data.log = "You cannot play that card"
-                        continue
-                    else:
-                        game_data.log = "You played card {:full}".format(card)
-                        if card.color == "black" and len(player.hand) > 1:
-                            game_data.color_selection_required = True
-                            while new_color is None:
-                                new_color = game_data.selected_color
-                            game_data.log = "You selected {}".format(new_color)
-                else:
-                    card_index = None
-                    game_data.log = "You picked up"
-                game.play(player_id, card_index, new_color)
-                played = True
+            return
         elif player.can_play(game.current_card):
             for i, card in enumerate(player.hand):
                 if game.current_card.playable(card):
@@ -124,6 +80,21 @@ class AIUnoGame:
         else:
             game_data.log = "Player {} picked up".format(player)
             game.play(player=player_id, card=None)
+
+    def play_human(self, card_index, new_color=None):
+        """Play the human's turn. Returns False if the card is not playable."""
+        player = self.player
+        game_data = self.game_data
+        if card_index is not None:
+            card = player.hand[card_index]
+            if not self.game.current_card.playable(card):
+                game_data.log = "You cannot play that card"
+                return False
+            game_data.log = "You played card {:full}".format(card)
+        else:
+            game_data.log = "You picked up"
+        self.game.play(player.player_id, card_index, new_color)
+        return True
 
     def print_hand(self):
         print("Your hand: {}".format(" ".join(str(card) for card in self.player.hand)))
