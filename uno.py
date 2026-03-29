@@ -1,13 +1,13 @@
-from random import shuffle, choice
-from itertools import product, repeat, chain
+from itertools import chain, product, repeat
+from random import choice, shuffle
 
 
-COLORS = ['red', 'yellow', 'green', 'blue']
-ALL_COLORS = COLORS + ['black']
+COLORS = ["red", "yellow", "green", "blue"]
+ALL_COLORS = COLORS + ["black"]
 NUMBERS = list(range(10)) + list(range(1, 10))
-SPECIAL_CARD_TYPES = ['skip', 'reverse', '+2']
+SPECIAL_CARD_TYPES = ["skip", "reverse", "+2"]
 COLOR_CARD_TYPES = NUMBERS + SPECIAL_CARD_TYPES * 2
-BLACK_CARD_TYPES = ['wildcard', '+4']
+BLACK_CARD_TYPES = ["wildcard", "+4"]
 CARD_TYPES = NUMBERS + SPECIAL_CARD_TYPES + BLACK_CARD_TYPES
 
 
@@ -20,6 +20,7 @@ class UnoCard:
 
     >>> card = UnoCard('red', 5)
     """
+
     def __init__(self, color, card_type):
         self._validate(color, card_type)
         self.color = color
@@ -27,10 +28,10 @@ class UnoCard:
         self.temp_color = None
 
     def __repr__(self):
-        return '<UnoCard object: {} {}>'.format(self.color, self.card_type)
+        return "<UnoCard object: {} {}>".format(self.color, self.card_type)
 
     def __str__(self):
-        return '{}{}'.format(self.color_short, self.card_type_short)
+        return "{}{}".format(self.color_short, self.card_type_short)
 
     def __eq__(self, other):
         return self.color == other.color and self.card_type == other.card_type
@@ -40,11 +41,11 @@ class UnoCard:
         Check the card is valid, raise exception if not.
         """
         if color not in ALL_COLORS:
-            raise ValueError('Invalid color')
-        if color == 'black' and card_type not in BLACK_CARD_TYPES:
-            raise ValueError('Invalid card type')
-        if color != 'black' and card_type not in COLOR_CARD_TYPES:
-            raise ValueError('Invalid card type')
+            raise ValueError("Invalid color")
+        if color == "black" and card_type not in BLACK_CARD_TYPES:
+            raise ValueError("Invalid card type")
+        if color != "black" and card_type not in COLOR_CARD_TYPES:
+            raise ValueError("Invalid card type")
 
     @property
     def color_short(self):
@@ -52,7 +53,7 @@ class UnoCard:
 
     @property
     def card_type_short(self):
-        if self.card_type in ('skip', 'reverse', 'wildcard'):
+        if self.card_type in ("skip", "reverse", "wildcard"):
             return self.card_type[0].upper()
         else:
             return self.card_type
@@ -69,7 +70,7 @@ class UnoCard:
     def temp_color(self, color):
         if color is not None:
             if color not in COLORS:
-                raise ValueError('Invalid color')
+                raise ValueError("Invalid color")
         self._temp_color = color
 
     def playable(self, other):
@@ -78,9 +79,9 @@ class UnoCard:
         otherwise return False
         """
         return (
-            self._color == other.color or
-            self.card_type == other.card_type or
-            other.color == 'black'
+            self._color == other.color
+            or self.card_type == other.card_type
+            or other.color == "black"
         )
 
 
@@ -95,23 +96,20 @@ class UnoPlayer:
     >>> cards = [UnoCard('red', n) for n in range(7)]
     >>> player = UnoPlayer(cards)
     """
+
     def __init__(self, cards, player_id=None):
         if len(cards) != 7:
-            raise ValueError(
-                'Invalid player: must be initalised with 7 UnoCards'
-            )
+            raise ValueError("Invalid player: must be initalised with 7 UnoCards")
         if not all(isinstance(card, UnoCard) for card in cards):
-            raise ValueError(
-                'Invalid player: cards must all be UnoCard objects'
-            )
+            raise ValueError("Invalid player: cards must all be UnoCard objects")
         self.hand = cards
         self.player_id = player_id
 
     def __repr__(self):
         if self.player_id is not None:
-            return '<UnoPlayer object: player {}>'.format(self.player_id)
+            return "<UnoPlayer object: player {}>".format(self.player_id)
         else:
-            return '<UnoPlayer object>'
+            return "<UnoPlayer object>"
 
     def __str__(self):
         if self.player_id is not None:
@@ -136,15 +134,14 @@ class UnoGame:
 
     >>> game = UnoGame(5)
     """
+
     def __init__(self, players, random=True):
         if not isinstance(players, int):
-            raise ValueError('Invalid game: players must be integer')
+            raise ValueError("Invalid game: players must be integer")
         if not 2 <= players <= 15:
-            raise ValueError('Invalid game: must be between 2 and 15 players')
+            raise ValueError("Invalid game: must be between 2 and 15 players")
         self.deck = self._create_deck(random)
-        self.players = [
-            UnoPlayer(self._deal_hand(), n) for n in range(players)
-        ]
+        self.players = [UnoPlayer(self._deal_hand(), n) for n in range(players)]
         self._player_cycle = ReversibleCycle(self.players)
         self._current_player = next(self._player_cycle)
         self._winner = None
@@ -161,7 +158,7 @@ class UnoGame:
         deck will be shuffled, otherwise will be unshuffled.
         """
         color_cards = product(COLORS, COLOR_CARD_TYPES)
-        black_cards = product(repeat('black', 4), BLACK_CARD_TYPES)
+        black_cards = product(repeat("black", 4), BLACK_CARD_TYPES)
         all_cards = chain(color_cards, black_cards)
         deck = [UnoCard(color, card_type) for color, card_type in all_cards]
         if random:
@@ -206,46 +203,40 @@ class UnoGame:
         If game is over, raise an exception.
         """
         if not isinstance(player, int):
-            raise ValueError('Invalid player: should be the index number')
+            raise ValueError("Invalid player: should be the index number")
         if not 0 <= player < len(self.players):
-            raise ValueError('Invalid player: index out of range')
+            raise ValueError("Invalid player: index out of range")
         _player = self.players[player]
         if self.current_player != _player:
-            raise ValueError('Invalid player: not their turn')
+            raise ValueError("Invalid player: not their turn")
         if card is None:
             self._pick_up(_player, 1)
             next(self)
             return
         _card = _player.hand[card]
         if not self.current_card.playable(_card):
-            raise ValueError(
-                'Invalid card: {} not playable on {}'.format(
-                    _card, self.current_card
-                )
-            )
-        if _card.color == 'black':
+            raise ValueError("Invalid card: {} not playable on {}".format(_card, self.current_card))
+        if _card.color == "black":
             if new_color not in COLORS:
-                raise ValueError(
-                    'Invalid new_color: must be red, yellow, green or blue'
-                )
+                raise ValueError("Invalid new_color: must be red, yellow, green or blue")
         if not self.is_active:
-            raise ValueError('Game is over')
+            raise ValueError("Game is over")
 
         played_card = _player.hand.pop(card)
         self.deck.append(played_card)
 
         card_color = played_card.color
         card_type = played_card.card_type
-        if card_color == 'black':
+        if card_color == "black":
             self.current_card.temp_color = new_color
-            if card_type == '+4':
+            if card_type == "+4":
                 next(self)
                 self._pick_up(self.current_player, 4)
-        elif card_type == 'reverse':
+        elif card_type == "reverse":
             self._player_cycle.reverse()
-        elif card_type == 'skip':
+        elif card_type == "skip":
             next(self)
-        elif card_type == '+2':
+        elif card_type == "+2":
             next(self)
             self._pick_up(self.current_player, 2)
 
@@ -298,6 +289,7 @@ class ReversibleCycle:
     >>> next(rc)
     2
     """
+
     def __init__(self, iterable):
         self._items = list(iterable)
         self._pos = None
@@ -334,7 +326,7 @@ class AIUnoGame:
         self.game = UnoGame(players)
         self.player = choice(self.game.players)
         self.player_index = self.game.players.index(self.player)
-        print('The game begins. You are Player {}.'.format(self.player_index))
+        print("The game begins. You are Player {}.".format(self.player_index))
         self.print_hand()
         while self.game.is_active:
             print()
@@ -346,32 +338,30 @@ class AIUnoGame:
         player_id = player.player_id
         current_card = game.current_card
         if player == self.player:
-            print('Current card: {}, color: {}'.format(
-                game.current_card, game.current_card._color
-            ))
+            print("Current card: {}, color: {}".format(game.current_card, game.current_card._color))
             self.print_hand()
             if player.can_play(current_card):
                 played = False
                 while not played:
-                    card_index = int(input('Which card do you want to play? '))
+                    card_index = int(input("Which card do you want to play? "))
                     card = player.hand[card_index]
                     if not game.current_card.playable(card):
-                        print('Cannot play that card')
+                        print("Cannot play that card")
                     else:
-                        if card.color == 'black':
-                            new_color = input('Which color do you want? ')
+                        if card.color == "black":
+                            new_color = input("Which color do you want? ")
                         else:
                             new_color = None
                         game.play(player_id, card_index, new_color)
                         played = True
             else:
-                print('You cannot play. You must pick up a card.')
+                print("You cannot play. You must pick up a card.")
                 game.play(player_id, card=None)
                 self.print_hand()
         elif player.can_play(game.current_card):
             for i, card in enumerate(player.hand):
                 if game.current_card.playable(card):
-                    if card.color == 'black':
+                    if card.color == "black":
                         new_color = choice(COLORS)
                     else:
                         new_color = None
@@ -383,6 +373,4 @@ class AIUnoGame:
             game.play(player=player_id, card=None)
 
     def print_hand(self):
-        print('Your hand: {}'.format(
-            ' '.join(str(card) for card in self.player.hand)
-        ))
+        print("Your hand: {}".format(" ".join(str(card) for card in self.player.hand)))

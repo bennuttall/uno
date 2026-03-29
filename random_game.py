@@ -1,5 +1,7 @@
-from uno import UnoGame, COLORS
 import random
+
+from uno import COLORS, UnoGame
+
 
 players = random.randint(2, 15)
 game = UnoGame(players)
@@ -14,7 +16,7 @@ while game.is_active:
     if player.can_play(game.current_card):
         for i, card in enumerate(player.hand):
             if game.current_card.playable(card):
-                if card.color == 'black':
+                if card.color == "black":
                     new_color = random.choice(COLORS)
                 else:
                     new_color = None
@@ -24,5 +26,7 @@ while game.is_active:
     else:
         print("Player {} picked up".format(player))
         game.play(player=player_id, card=None)
+
+print("{} player game - {} cards played".format(players, count))
 
 print("{} player game - {} cards played".format(players, count))
