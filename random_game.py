@@ -3,7 +3,6 @@ import random
 from uno.constants import COLORS
 from uno.game import UnoGame
 
-
 players = random.randint(2, 15)
 game = UnoGame(players)
 
@@ -27,7 +26,5 @@ while game.is_active:
     else:
         print("Player {} picked up".format(player))
         game.play(player=player_id, card=None)
-
-print("{} player game - {} cards played".format(players, count))
 
 print("{} player game - {} cards played".format(players, count))

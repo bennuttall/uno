@@ -16,6 +16,9 @@ classifiers = [
 ]
 readme = "README.md"
 
+[project.scripts]
+uno = "uno.cli:main"
+
 [project.urls]
 Source = "https://github.com/bennuttall/uno"
 Issues = "https://github.com/bennuttall/uno/issues"

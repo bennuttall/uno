@@ -1,17 +1,18 @@
 # Uno
 
-Some unit tested Python code to model the card game Uno
+A Python implementation of the card game [Uno](https://en.wikipedia.org/wiki/Uno_(card_game))
 
 ## Rules
 
 https://en.wikipedia.org/wiki/Uno_(card_game)#Official_rules
 
-## Usage
+## Library usage
 
 An example auto-generated game of 5 players:
 
 ```python
-from uno import UnoGame, COLORS
+from uno import UnoGame
+from uno.constants import COLORS
 import random
 
 game = UnoGame(5)
@@ -36,17 +37,11 @@ while game.is_active:
 
 See [random_game.py](random_game.py)
 
-## AI
+## CLI
 
-A simple interactive AI version of the game can be played using keyboard inputs. Just create an instance of `AIUnoGame` with the required number of players:
+A simple interactive CLI version of the game can be played using keyboard inputs. Just run `uno --players 4` with the desired number of players.
 
-```python
-from uno import AIUnoGame
-
-game = AIUnoGame(5)
-```
-
-You will be assigned a player number at random, and will be asked to make your move when it is your turn. Enter card numbers as a zero-based index, and colours as lowercase strings. (I'll tidy that up later)
+You will be assigned a player number at random, and will be asked to make your move when it is your turn. Enter the number of the card you want to play (shown in your hand), or `p` to pick up. If you play a black card, you will be prompted to choose a colour by number.
 
 ## Graphical game
 
@@ -54,13 +49,7 @@ A graphical version of the game can be played, developed using [pygame-zero](htt
 
 ![](pgz_screenshot.png)
 
-Install pygame zero with:
-
-```bash
-sudo pip3 install pgzero
-```
-
-And run the game with:
+Run the game with:
 
 ```bash
 pgzrun uno_pgz.py
