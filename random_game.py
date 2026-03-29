@@ -1,6 +1,7 @@
 import random
 
-from uno import COLORS, UnoGame
+from uno.constants import COLORS
+from uno.game import UnoGame
 
 
 players = random.randint(2, 15)
