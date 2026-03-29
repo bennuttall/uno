@@ -1,5 +1,5 @@
 from itertools import chain, product, repeat
-from random import shuffle
+from random import shuffle as random_shuffle
 
 from .card import UnoCard
 from .constants import BLACK_CARD_TYPES, COLOR_CARD_TYPES, COLORS
@@ -44,7 +44,7 @@ class UnoGame:
         all_cards = chain(color_cards, black_cards)
         deck = [UnoCard(color, card_type) for color, card_type in all_cards]
         if random:
-            shuffle(deck)
+            random_shuffle(deck)
             return deck
         else:
             return list(reversed(deck))
@@ -138,6 +138,15 @@ class UnoGame:
             winner_name = self.players.index(self.winner)
         print("Player {} wins!".format(winner_name))
 
+    def _reshuffle(self):
+        """
+        Reshuffle all but the top card back into the draw pile.
+        """
+        top_card = self.deck[-1]
+        random_shuffle(self.deck)
+        self.deck.remove(top_card)
+        self.deck.append(top_card)
+
     def _pick_up(self, player, n):
         """
         Take n cards from the bottom of the deck and add it to the player's
@@ -146,5 +155,7 @@ class UnoGame:
         player: UnoPlayer
         n: int
         """
+        if len(self.deck) - 1 < n:
+            self._reshuffle()
         penalty_cards = [self.deck.pop(0) for i in range(n)]
         player.hand.extend(penalty_cards)
