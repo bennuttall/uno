@@ -1,7 +1,11 @@
 from itertools import chain, product, repeat
+from pathlib import Path
 from random import choice, shuffle as random_shuffle
 
+import pgzero.loaders
 from pgzero.actor import Actor
+
+pgzero.loaders.images = pgzero.loaders.ImageLoader(str(Path(__file__).parent / "images"))
 
 from .card import UnoCard
 from .constants import BLACK_CARD_TYPES, COLOR_CARD_TYPES, COLORS
